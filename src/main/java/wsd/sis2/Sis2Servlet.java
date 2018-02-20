@@ -3,6 +3,7 @@ package wsd.sis2;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.CharBuffer;
+import java.security.Principal;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,6 +22,7 @@ import org.apache.http.nio.client.methods.AsyncCharConsumer;
 import org.apache.http.nio.client.methods.HttpAsyncMethods;
 import org.apache.http.nio.protocol.HttpAsyncRequestProducer;
 import org.apache.http.protocol.HttpContext;
+import wsd.authen.UserPrincipal;
 
 /**
  *
@@ -59,11 +61,14 @@ public class Sis2Servlet extends HttpServlet {
             out.println("<h2>Path Info " + request.getPathInfo() + "</h2>");
             out.println("<h3>Base url " + base_url + "</h3>");
             try {
-                out.println(grab("http://www.apache.org"));
+                out.println(grab("http://087-173.onebb.com/blogs/rsync"));
             } catch (InterruptedException ex) {
                 Logger.getLogger(Sis2Servlet.class.getName()).log(Level.SEVERE, null, ex);
                 out.println(ex.getMessage());
             }
+            UserPrincipal principal = (UserPrincipal)request.getUserPrincipal();
+            out.println("<p>User name " + principal.getName() + "</p>");
+            out.println("<p>SN " + principal.getMap().get("sn") + "</p>");
             out.println("</body>");
             out.println("</html>");
         }

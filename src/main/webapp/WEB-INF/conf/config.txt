@@ -1,0 +1,49 @@
+conf/jaas.config
+LdapLogin {
+    wsd.authen.LdapLoginModule required debug=true;
+};
+
+bin/setenv.sh
+export CATALINA_OPTS="$CATALINA_OPTS -Djava.security.auth.login.config==$CATALINA_BASE/conf/jaas.config"
+
+conf/tomee.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<tomee>
+  <Resource id="churchDB" type="javax.sql.DataSource">
+    UserName user1
+    Password user2
+    JdbcDriver com.mysql.jdbc.Driver
+    JdbcUrl jdbc:mysql://localhost/church
+    JtaManaged true
+    factory = org.apache.tomcat.jdbc.pool.DataSourceFactory
+    ConnectionProperties = autoReconnect=true;autoReconnectForPools=true;zeroDateTimeBehavior=convertToNull;useUnicode=yes;characterEncoding=UTF-8
+    testOnBorrow = true
+    validationQuery = SELECT 1
+    validationInterval = 30000
+  </Resource>
+<!-- below is not tested -->
+	<Resource id="executorService" type="ManagedExecutorService">
+		Core = 5
+		Max = 25
+		KeepAlive = 5 s
+		Queue = 15
+		ThreadFactory = org.apache.openejb.threads.impl.ManagedThreadFactoryImpl
+		Lazy = true
+	</Resource>
+        <Resource name="mongodb/MyMongoClient"
+          auth="Container"
+          type="com.mongodb.MongoClient"
+          closeMethod="close"
+          factory="com.mongodb.client.jndi.MongoClientFactory"
+          singleton="true"
+          connectionString="mongodb://localhost"/>
+</tomee>
+
+conf/context.xml
+<?xml version='1.0' encoding='utf-8'?>
+<Context>
+    <!-- Default set of monitored resources -->
+    <WatchedResource>WEB-INF/web.xml</WatchedResource>
+	<Environment name="datapath" value="/var/barcode" type="java.lang.String" override="false"/>
+	<Environment name="naspath" value="/home/cpliu/cp/Documents" type="java.lang.String" override="false"/>
+</Context>
