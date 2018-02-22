@@ -61,22 +61,22 @@ public class AdminBean implements java.io.Serializable {
     
     private static final long serialVersionUID = 34523001L;
     private String user, pwd, url;
-    /*
+    
     @Resource(name="mysql2")
     private DataSource dataSource;
-    @Inject
+    //@Inject
     private MongoBean mongoBean;
     
-    /*
     @PostConstruct
     public void init() {
-        user = "null";
+        user = "";
         if (dataSource != null) {
             try {
-                ResultSet rs = dataSource.getConnection().prepareStatement("SELECT role FROM groups WHERE user='abc'").executeQuery();
+                ResultSet rs = dataSource.getConnection().prepareStatement(
+                        "SELECT description FROM configuration WHERE id='sis.user'").executeQuery();
                 while (rs.next()) {
-                    user = user.concat(rs.getString("role"));
-                }
+                    user = user.concat(rs.getString("description"));
+                } /*
                 if (mongoBean == null) {/*
                     String env = "java:comp/env";
                     Context initCtx = new InitialContext();
@@ -96,7 +96,7 @@ public class AdminBean implements java.io.Serializable {
     pwd = "MongoClient not injected";
                 }
                 else
-                    pwd = "MongoClient injected";
+                    pwd = "MongoClient injected"; */
             } catch (SQLException ex) {
                 Logger.getLogger(AdminBean.class.getName()).log(Level.SEVERE, null, ex);
                 user = ex.getClass().getName();
@@ -120,7 +120,7 @@ public class AdminBean implements java.io.Serializable {
         }
         FacesContext.getCurrentInstance().addMessage(null, msg);
     }
-    */
+    /* */
     
     public void login() {
         LdapClient client = new LdapClient(getUrl());

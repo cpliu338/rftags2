@@ -16,7 +16,7 @@
                 <p:outputLabel for="pwd" value="pwd"/>
                 <p:inputText id="pwd" value="#{adminBean.pwd}"/>
                 <f:facet name="footer">
-                    <p:commandButton update=":msg" process="@form" action="#{adminBean.test}" value="Log in" />
+                    <p:commandButton update=":msg" process="@form" action="#{adminBean.login}" value="Log in" />
                 </f:facet>
             </p:panelGrid>
         </h:form>
