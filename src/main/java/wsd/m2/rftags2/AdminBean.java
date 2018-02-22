@@ -44,21 +44,36 @@ ngoClient' in class wsd.m2.rftags2.AdminBean
 @ManagedBean
 @ViewScoped
 public class AdminBean implements java.io.Serializable {
+
+    /**
+     * @return the url
+     */
+    public String getUrl() {
+        return url;
+    }
+
+    /**
+     * @param url the url to set
+     */
+    public void setUrl(String url) {
+        this.url = url;
+    }
     
     private static final long serialVersionUID = 34523001L;
-    private String user, pwd;
-    @Resource(name="churchDB")
+    private String user, pwd, url;
+    /*
+    @Resource(name="mysql2")
     private DataSource dataSource;
     @Inject
     private MongoBean mongoBean;
     
-    
+    /*
     @PostConstruct
     public void init() {
         user = "null";
         if (dataSource != null) {
             try {
-                ResultSet rs = dataSource.getConnection().prepareStatement("SELECT role FROM groups WHERE user='cpliu'").executeQuery();
+                ResultSet rs = dataSource.getConnection().prepareStatement("SELECT role FROM groups WHERE user='abc'").executeQuery();
                 while (rs.next()) {
                     user = user.concat(rs.getString("role"));
                 }
@@ -77,7 +92,8 @@ public class AdminBean implements java.io.Serializable {
                     else {
                         pwd = env;
                         mongoBean = (MongoClient)o;
-                    }*/pwd = "MongoClient not injected";
+                    }* /
+    pwd = "MongoClient not injected";
                 }
                 else
                     pwd = "MongoClient injected";
@@ -87,7 +103,6 @@ public class AdminBean implements java.io.Serializable {
             }
         }
     }
-    
     public void test() {
         FacesMessage msg = new FacesMessage();
         MongoDatabase db = mongoBean.getDatabase();
@@ -105,12 +120,13 @@ public class AdminBean implements java.io.Serializable {
         }
         FacesContext.getCurrentInstance().addMessage(null, msg);
     }
+    */
     
     public void login() {
-        LdapClient client = new LdapClient("ldap://ldap.forumsys.com:389");
+        LdapClient client = new LdapClient(getUrl());
         FacesMessage msg = new FacesMessage();
             msg.setSeverity(FacesMessage.SEVERITY_WARN);
-        if (client.bind("uid="+user+",dc=example,dc=com", getPwd())) {
+        if (client.bind(user, getPwd())) {
             msg.setSummary("OK");
             msg.setSeverity(FacesMessage.SEVERITY_INFO);
             try {

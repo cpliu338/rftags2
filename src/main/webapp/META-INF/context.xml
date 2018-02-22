@@ -4,15 +4,11 @@
            className="org.apache.catalina.realm.JAASRealm" 
            roleClassNames="wsd.authen.RolePrincipal" 
            userClassNames="wsd.authen.UserPrincipal"/>
-     <Resource name="mysql2" type="javax.sql.DataSource"
-        username="user1"
-	password="user2" driverClassName="com.mysql.jdbc.Driver"
-        url="jdbc:mysql://localhost/church?zeroDateTimeBehavior=convertToNull&amp;useUnicode=yes&amp;characterEncoding=UTF-8" />
-    <Resource name="mongoClient"
+    <!--Resource name="mongoClient"
           auth="Container"
           type="com.mongodb.MongoClient"
           closeMethod="close"
           factory="com.mongodb.client.jndi.MongoClientFactory"
           singleton="true"
-          connectionString="mongodb://localhost"/>
+          connectionString="mongodb://localhost"/-->
 </Context>

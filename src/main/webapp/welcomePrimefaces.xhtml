@@ -9,6 +9,8 @@
     <h:body>
         <h:form>
             <p:panelGrid columns="2">
+                <p:outputLabel for="url" value="url"/>
+                <p:inputText id="url" value="#{adminBean.url}"/>
                 <p:outputLabel for="name" value="name"/>
                 <p:inputText id="name" value="#{adminBean.user}"/>
                 <p:outputLabel for="pwd" value="pwd"/>

@@ -86,7 +86,7 @@ public class LdapLoginModule implements LoginModule {
 	env.put(Context.INITIAL_CONTEXT_FACTORY,
 	    "com.sun.jndi.ldap.LdapCtxFactory");
 	env.put(Context.SECURITY_AUTHENTICATION, "simple");
-	env.put(Context.SECURITY_PRINCIPAL, "uid="+user+",dc=example,dc=com");
+	env.put(Context.SECURITY_PRINCIPAL, user);
 	env.put(Context.SECURITY_CREDENTIALS, pwd);
 	env.put(Context.PROVIDER_URL, "ldap://ldap.forumsys.com:389");
         Logger.getLogger(this.getClass().getName()).log(Level.INFO, "prin: {0}, cred: {1}",

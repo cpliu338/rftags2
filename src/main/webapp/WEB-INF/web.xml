@@ -42,7 +42,7 @@
         <web-resource-collection>
             <web-resource-name>Admin stuff</web-resource-name>
             <description/>
-            <url-pattern>/admin/*</url-pattern>
+            <url-pattern>/xadmin/*</url-pattern>
         </web-resource-collection>
         <auth-constraint>
             <description/>
