@@ -10,7 +10,6 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.spi.LoginModule;
 import java.util.*;
 import java.util.logging.*;
-import javax.annotation.Resource;
 import javax.naming.*;
 import javax.naming.directory.DirContext;
 import javax.naming.ldap.InitialLdapContext;
@@ -30,7 +29,10 @@ public class LdapLoginModule implements LoginModule {
   private String login;
   private List<String> userGroups;
   private java.util.HashMap<String,String> map;
-  java.util.Properties props;
+  private Map options;
+  private static final String URL_TEMPLATE = "ldap://%s:389";
+  private static final String USER_TEMPLATE = "uid=%s,dc=example,dc=com";
+  private static final String SQL_TEMPLATE = "SELECT role FROM groups WHERE user=?";
 
     //@Resource(name="churchDB")
     private DataSource dataSource;
@@ -48,12 +50,13 @@ public class LdapLoginModule implements LoginModule {
       CallbackHandler callbackHandler,
       Map<String, ?> sharedState,
       Map<String, ?> options) {
+      this.options = options;
       try {
         Context initCtx = new InitialContext();
         Context envCtx = (Context) initCtx.lookup("java:comp/env");
 
         // Look up our data source
-          dataSource = (DataSource)envCtx.lookup("mysql2"); // java:comp/env/churchDB
+          dataSource = (DataSource)envCtx.lookup("mysql2"); 
       } catch (NamingException | RuntimeException ex) {
           Logger.getLogger(LdapLoginModule.class.getName()).log(Level.SEVERE, null, ex);
       }
@@ -61,35 +64,20 @@ public class LdapLoginModule implements LoginModule {
         map = new java.util.HashMap<>();
         handler = callbackHandler;
         this.subject = subject;
-        /*
-        props = new java.util.Properties();
-        try (java.io.InputStream is = LdapLoginModule.class.getResourceAsStream("/ldap.properties")) {
-            props.load(is);
-            if (!props.containsKey("url")) {
-                Logger.getLogger(LdapLoginModule.class.getName()).log(Level.WARNING, "Cannot read property url");
-            }
-            props.getProperty("principal", "cn=manager,ou=Internal,dc=system,dc=lan");
-            props.getProperty("credential", "jMSL5KNZtM+O8RB+");
-            props.getProperty("url", "ldaps://192.168.11.224:636");
-            props.getProperty("base", "dc=system,dc=lan");
-        }
-        catch (IOException ex) {
-            Logger.getLogger(LdapLoginModule.class.getName()).log(Level.SEVERE, null, ex);
-        }
-            */
         Logger.getLogger(this.getClass().getName()).log(Level.INFO, "LdapLoginModule initialized");
   }
   
     private boolean bind(String user, String pwd) throws NamingException {
 	// Set up environment for creating initial context
 	Hashtable env = new Hashtable(11);
-	env.put(Context.INITIAL_CONTEXT_FACTORY,
-	    "com.sun.jndi.ldap.LdapCtxFactory");
+	env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
 	env.put(Context.SECURITY_AUTHENTICATION, "simple");
-	env.put(Context.SECURITY_PRINCIPAL, "uid="+user+",dc=example,dc=com");
+	env.put(Context.SECURITY_PRINCIPAL, String.format(USER_TEMPLATE, user));
 	env.put(Context.SECURITY_CREDENTIALS, pwd);
-	env.put(Context.PROVIDER_URL, "ldap://ldap.forumsys.com:389");
-        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "prin: {0}, cred: {1}",
+        String url = String.format(URL_TEMPLATE, options.get("server"));
+        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Binding to {0}", url);
+	env.put(Context.PROVIDER_URL, url);
+        Logger.getLogger(this.getClass().getName()).log(Level.FINE, "prin: {0}, cred: {1}",
             new Object[] {
                 user, pwd
             });
@@ -138,12 +126,11 @@ public class LdapLoginModule implements LoginModule {
     subject.getPrincipals().add(userPrincipal);
 
     if (userGroups != null && userGroups.size() > 0) {
-      for (String groupName : userGroups) {
-        rolePrincipal = new RolePrincipal(groupName);
-        subject.getPrincipals().add(rolePrincipal);
-      }
+        userGroups.forEach(groupName -> {
+            rolePrincipal = new RolePrincipal(groupName);
+            subject.getPrincipals().add(rolePrincipal);
+        });
     }
-
     return true;
   }
 
@@ -160,9 +147,10 @@ public class LdapLoginModule implements LoginModule {
   }
   
     public void checkGroups() {
+        userGroups.add("logged_in");
         if (dataSource != null) {
             try (Connection conn = dataSource.getConnection(); 
-                    PreparedStatement stmt = conn.prepareStatement("SELECT role FROM groups WHERE user=?")) {
+                    PreparedStatement stmt = conn.prepareStatement(SQL_TEMPLATE)) {
                 stmt.setString(1, "cpliu");
                 ResultSet rs = stmt.executeQuery();
                 while (rs.next()) {
