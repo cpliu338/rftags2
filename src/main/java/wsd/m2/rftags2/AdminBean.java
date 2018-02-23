@@ -76,28 +76,17 @@ public class AdminBean implements java.io.Serializable {
                         "SELECT description FROM configuration WHERE id='sis.user'").executeQuery();
                 while (rs.next()) {
                     user = user.concat(rs.getString("description"));
-                } /*
-                if (mongoBean == null) {/*
+                } 
+                if (mongoBean == null) {
                     String env = "java:comp/env";
                     Context initCtx = new InitialContext();
                     Context envCtx = (Context) initCtx.lookup(env);
-                    Object o = envCtx.lookup("mongoClient");
-                    if (o == null) {
-                        env = "openejb/Resource/rftags2";
-                        envCtx = (Context) initCtx.lookup(env);
-                        o = envCtx.lookup("mongoClient");
-                    }
-                    if (o==null)
-                        pwd = "Cannot inject mongo client";
-                    else {
-                        pwd = env;
-                        mongoBean = (MongoClient)o;
-                    }* /
-    pwd = "MongoClient not injected";
+                    Object o = envCtx.lookup("ldap_url");//mongoClient");
+                    pwd = o==null ? "Null" : o.toString();
                 }
                 else
-                    pwd = "MongoClient injected"; */
-            } catch (SQLException ex) {
+                    pwd = "MongoClient injected"; 
+            } catch (SQLException | NamingException ex) {
                 Logger.getLogger(AdminBean.class.getName()).log(Level.SEVERE, null, ex);
                 user = ex.getClass().getName();
             }

@@ -61,22 +61,6 @@ public class LdapLoginModule implements LoginModule {
         map = new java.util.HashMap<>();
         handler = callbackHandler;
         this.subject = subject;
-        /*
-        props = new java.util.Properties();
-        try (java.io.InputStream is = LdapLoginModule.class.getResourceAsStream("/ldap.properties")) {
-            props.load(is);
-            if (!props.containsKey("url")) {
-                Logger.getLogger(LdapLoginModule.class.getName()).log(Level.WARNING, "Cannot read property url");
-            }
-            props.getProperty("principal", "cn=manager,ou=Internal,dc=system,dc=lan");
-            props.getProperty("credential", "jMSL5KNZtM+O8RB+");
-            props.getProperty("url", "ldaps://192.168.11.224:636");
-            props.getProperty("base", "dc=system,dc=lan");
-        }
-        catch (IOException ex) {
-            Logger.getLogger(LdapLoginModule.class.getName()).log(Level.SEVERE, null, ex);
-        }
-            */
         Logger.getLogger(this.getClass().getName()).log(Level.INFO, "LdapLoginModule initialized");
   }
   
@@ -160,6 +144,8 @@ public class LdapLoginModule implements LoginModule {
   }
   
     public void checkGroups() {
+        userGroups.add("logged_in"); // Any logged-in user has this role
+        if (!userGroups.isEmpty()) return;
         if (dataSource != null) {
             try (Connection conn = dataSource.getConnection(); 
                     PreparedStatement stmt = conn.prepareStatement("SELECT role FROM groups WHERE user=?")) {

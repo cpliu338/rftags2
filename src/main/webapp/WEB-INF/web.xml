@@ -42,7 +42,7 @@
         <web-resource-collection>
             <web-resource-name>Admin stuff</web-resource-name>
             <description/>
-            <url-pattern>/xadmin/*</url-pattern>
+            <url-pattern>/admin/*</url-pattern>
         </web-resource-collection>
         <auth-constraint>
             <description/>
@@ -59,6 +59,6 @@
     </login-config>
     <security-role>
         <description/>
-        <role-name>deacons</role-name>
+        <role-name>logged_in</role-name>
     </security-role>
 </web-app>
