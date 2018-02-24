@@ -47,3 +47,5 @@ conf/context.xml
 	<Environment name="datapath" value="/var/barcode" type="java.lang.String" override="false"/>
 	<Environment name="naspath" value="/home/cpliu/cp/Documents" type="java.lang.String" override="false"/>
 </Context>
+
+http://blog.hatemalimam.com/jsf-and-twitter-bootstrap-integration/

@@ -1,16 +1,26 @@
 <?xml version='1.0' encoding='UTF-8' ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
       xmlns:h="http://xmlns.jcp.org/jsf/html">
     <h:head>
-        <title>Facelet Title</title>
+        <title>Test Panel</title>
     </h:head>
     <h:body>
-        <h1>Hello from Facelets</h1>
+        <h1>Test Panel</h1>
         <h:form>
-        <p:commandButton value="check" />
-
+            <p:panelGrid columns="2">
+                <p:outputLabel for="env" value="Env"/>
+                <p:inputText id="env" value="#{configBean.field1}"/>
+                <p:outputLabel for="look-up" value="Look up"/>
+                <p:inputText id="look-up" value="#{configBean.field2}"/>
+                <f:facet name="footer">
+                    <p:commandButton update="result1 :msg" process="@form" action="#{configBean.checkEnv()}" value="Check Env" />
+                </f:facet>
+            </p:panelGrid>
+            <p:inputTextarea id="result1" value="#{configBean.result1}" readonly="true" cols="80"/>
         </h:form>
-        <p:messages showDetail="true"/>
+        <p><p:link href="../welcomePrimefaces.jsf" value="Home"/></p>
+        <p:messages id="msg" showDetail="true"/>
     </h:body>
 </html>
