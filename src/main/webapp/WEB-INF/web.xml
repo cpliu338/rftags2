@@ -35,7 +35,7 @@
         </session-timeout>
     </session-config>
     <welcome-file-list>
-        <welcome-file>welcomePrimefaces.jsf</welcome-file>
+        <welcome-file>index.jsf</welcome-file>
     </welcome-file-list>
     <security-constraint>
         <display-name>Admin stuff</display-name>

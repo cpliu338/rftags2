@@ -6,16 +6,22 @@
         <title>Login</title>
     </h:head>
     <h:body>
+<div style="
+    margin: 0 auto;
+    width: 200px; height: 200px;
+">
+<div style="height: 30px">&nbsp;</div>
+<h1>Log In</h1>
         <form method="POST" action="j_security_check">
-            <p:panelGrid columns="2">
+            <p:panelGrid styleClass="ui-g-12" columns="2">
                         <h:outputText value="Name" />
                         <input type="text" name="j_username" />
                         <h:outputText value="password" />
                         <input type="password" name="j_password"/>
                         <h:outputText value="" />
-                        <input type="submit" value="Log in" />
+<button class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" type="submit"><span class="ui-button-text ui-c">Log in</span></button>
             </p:panelGrid>
         </form>
+        </div>
     </h:body>
 </html>
-

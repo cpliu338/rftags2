@@ -39,6 +39,24 @@ public class ConfigBean {
             FacesContext.getCurrentInstance().addMessage(null, msg);
         }
     }
+    
+    public String test() {
+        FacesMessage msg = new FacesMessage();
+        msg.setSeverity(FacesMessage.SEVERITY_INFO);
+        msg.setSummary("test");
+        try {
+            msg.setSeverity(FacesMessage.SEVERITY_WARN);
+            msg.setDetail(field1);
+        }
+        catch (RuntimeException ex) {
+            msg.setSummary(ex.getClass().getName());
+            msg.setDetail(ex.getMessage());
+            FacesContext.getCurrentInstance().addMessage(null, msg);
+            return null;
+        }
+        FacesContext.getCurrentInstance().addMessage(null, msg);
+        return field1;
+    }
 
     /**
      * @return the field1
