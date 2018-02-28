@@ -37,6 +37,7 @@ public class ConfigBean {
             msg.setSummary(ex.getClass().getName());
             msg.setDetail(ex.getMessage());
             FacesContext.getCurrentInstance().addMessage(null, msg);
+            throw new RuntimeException(ex);
         }
     }
     

@@ -23,9 +23,19 @@
                             <p:commandButton ajax="false" action="#{configBean.test()}" value="JSF return" />
                         </f:facet>
                     </p:panelGrid>
-                    <p:inputTextarea id="result1" value="#{configBean.result1}" readonly="true" cols="80"/>
+                    <p:inputTextarea id="result1" value="#{configBean.result1}" cols="80"/>
                 </h:form>
                 <p:messages id="msg" showDetail="true"/>
+                <p:ajaxExceptionHandler type="javax.faces.application.ViewExpiredException"
+                    update="exceptionDialog" onexception="PF('exceptionDialog').show();" />
+                <p:dialog id="exceptionDialog" header="Exception: #{pfExceptionHandler.type}
+                occured!" widgetVar="exceptionDialog" height="500px">
+                    Message: #{pfExceptionHandler.message} <br/>
+                    StackTrace: <h:outputText value="#{pfExceptionHandler.formattedStackTrace}"
+                    escape="false" />
+                    <p:button onclick="document.location.href = document.location.href;"
+                    value="Reload!"/>
+                </p:dialog>
             </ui:define>
         </ui:composition>
     </h:body>
