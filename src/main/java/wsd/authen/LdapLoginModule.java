@@ -30,9 +30,9 @@ public class LdapLoginModule implements LoginModule {
   private List<String> userGroups;
   private java.util.HashMap<String,String> map;
   private Map options;
-  private static final String URL_TEMPLATE = "ldap://%s:389";
-  private static final String USER_TEMPLATE = "uid=%s,dc=example,dc=com";
-  private static final String SQL_TEMPLATE = "SELECT role FROM groups WHERE user=?";
+  public static final String URL_TEMPLATE = "ldap://%s:389";
+  public static final String USER_TEMPLATE = "uid=%s,dc=example,dc=com";
+  public static final String SQL_TEMPLATE = "SELECT role FROM groups WHERE user=?";
 
     //@Resource(name="churchDB")
     private DataSource dataSource;
