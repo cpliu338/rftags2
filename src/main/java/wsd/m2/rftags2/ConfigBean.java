@@ -3,7 +3,9 @@ package wsd.m2.rftags2;
 import com.mongodb.MongoClient;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import javax.ejb.EJB;
 import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
@@ -11,6 +13,7 @@ import javax.faces.context.FacesContext;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import wsd.m2.AuthenticateEjb;
 
 
 /**
@@ -22,14 +25,33 @@ import javax.naming.NamingException;
 public class ConfigBean {
     private String field1;
     private String field2;
-    @Resource(name="datapath")
+    
+    //@ Resource(name="datapath")
     private String result1;
+    
+    @EJB
+    private AuthenticateEjb bean;
+    
+    @PostConstruct
+    public void init() {
+        result1 = (bean == null) ? "No bean" : bean.getStatus();
+    }
+    
+    private Object lookup() throws NamingException {
+        Context initCtx = new InitialContext();
+        Context envCtx = (Context) initCtx.lookup(field1);
+        return envCtx.lookup(field2);
+    }
     
     public void checkEnv() {
         try {
-            Context initCtx = new InitialContext();
-            Context envCtx = (Context) initCtx.lookup(field1);
-            result1 = (String)envCtx.lookup(field2);
+            Object o = lookup();
+            if (o == null)
+                result1 = "Not found";
+            else if (o instanceof String)
+                result1 = (String)o;
+            else
+                result1 = o.getClass().getName();
         } catch (NamingException ex) {
             Logger.getLogger(ConfigBean.class.getName()).log(Level.SEVERE, null, ex);
             FacesMessage msg = new FacesMessage();
@@ -37,26 +59,25 @@ public class ConfigBean {
             msg.setSummary(ex.getClass().getName());
             msg.setDetail(ex.getMessage());
             FacesContext.getCurrentInstance().addMessage(null, msg);
-            throw new RuntimeException(ex);
+            //throw new RuntimeException(ex);
         }
     }
     
     public String test() {
-        FacesMessage msg = new FacesMessage();
-        msg.setSeverity(FacesMessage.SEVERITY_INFO);
-        msg.setSummary("test");
+        Object o;
         try {
-            msg.setSeverity(FacesMessage.SEVERITY_WARN);
-            msg.setDetail(field1);
+            o = lookup();
+            if (o != null) {
+                AuthenticateEjb auth = (AuthenticateEjb)o;
+                result1 = Boolean.toString(auth.authenticate(field1, field1));
+            }
+            else
+                result1 = "Object is null";
+        } catch (ClassCastException | NamingException ex) {
+            Logger.getLogger(ConfigBean.class.getName()).log(Level.SEVERE, null, ex);
+            result1 = ex.getMessage();
         }
-        catch (RuntimeException ex) {
-            msg.setSummary(ex.getClass().getName());
-            msg.setDetail(ex.getMessage());
-            FacesContext.getCurrentInstance().addMessage(null, msg);
-            return null;
-        }
-        FacesContext.getCurrentInstance().addMessage(null, msg);
-        return field1;
+        return null;
     }
 
     /**
