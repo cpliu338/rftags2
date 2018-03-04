@@ -22,7 +22,10 @@ import wsd.m2.AuthenticateEjb;
  */
 @ManagedBean
 @ViewScoped
-public class ConfigBean {
+public class ConfigBean implements java.io.Serializable {
+    
+    public static final long serialVersionUID = 345345L;
+    
     private String field1;
     private String field2;
     
@@ -45,14 +48,8 @@ public class ConfigBean {
     
     public void checkEnv() {
         try {
-            Object o = lookup();
-            if (o == null)
-                result1 = "Not found";
-            else if (o instanceof String)
-                result1 = (String)o;
-            else
-                result1 = o.getClass().getName();
-        } catch (NamingException ex) {
+            result1 = bean.getStatus();
+        } catch (RuntimeException ex) {
             Logger.getLogger(ConfigBean.class.getName()).log(Level.SEVERE, null, ex);
             FacesMessage msg = new FacesMessage();
             msg.setSeverity(FacesMessage.SEVERITY_WARN);
@@ -66,14 +63,8 @@ public class ConfigBean {
     public String test() {
         Object o;
         try {
-            o = lookup();
-            if (o != null) {
-                AuthenticateEjb auth = (AuthenticateEjb)o;
-                result1 = Boolean.toString(auth.authenticate(field1, field1));
-            }
-            else
-                result1 = "Object is null";
-        } catch (ClassCastException | NamingException ex) {
+            result1 = Boolean.toString(bean.authenticate(field1, field2));
+        } catch (RuntimeException ex) {
             Logger.getLogger(ConfigBean.class.getName()).log(Level.SEVERE, null, ex);
             result1 = ex.getMessage();
         }

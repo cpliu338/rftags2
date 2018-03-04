@@ -6,6 +6,7 @@ import java.util.Hashtable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Resource;
+import javax.ejb.EJB;
 import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
@@ -18,6 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
 import wsd.authen.LdapLoginModule;
+import wsd.m2.AuthenticateEjb;
 
 /**
  *
@@ -29,6 +31,9 @@ public class AuthenticateServlet extends HttpServlet {
 
     @Resource(name="churchDB")
     DataSource dataSource;
+    @EJB
+    private AuthenticateEjb bean;
+    
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
      * methods.
@@ -77,12 +82,13 @@ public class AuthenticateServlet extends HttpServlet {
             else {
                 boolean bound;
                 try {
-                    bound = bind(user, pwd);
+                    bound = //bind(user, pwd);
+                    bean.authenticate(user, pwd);
                     response.setStatus(bound ? 200 : 401);
                     out.println("Done");
                 }
-                catch (NamingException ex) {
-                    response.setStatus(200);
+                catch (RuntimeException ex) {
+                    response.setStatus(500);
                     out.println (dataSource == null ? "Null DS" : dataSource.getClass().getName());    
                 }
             }
@@ -105,6 +111,9 @@ public class AuthenticateServlet extends HttpServlet {
             });
         DirContext ctx = new InitialLdapContext(env,null);
         ctx.close();
+        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Found : {0}",
+                Boolean.toString(bean.authenticate(String.format(LdapLoginModule.USER_TEMPLATE, user), pwd))
+        );
         return true;
     }
 

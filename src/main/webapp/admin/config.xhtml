@@ -20,7 +20,7 @@
                         <p:inputText id="look-up" value="#{configBean.field2}"/>
                         <f:facet name="footer">
                             <p:commandButton update="result1 :msg" process="@form" action="#{configBean.checkEnv()}" value="Check Env" />
-                            <p:commandButton ajax="false" action="#{configBean.test()}" value="JSF return" />
+                            <p:commandButton update="result1 :msg" process="@form" action="#{configBean.test()}" value="Test" />
                         </f:facet>
                     </p:panelGrid>
                     <p:inputTextarea id="result1" value="#{configBean.result1}" cols="80"/>

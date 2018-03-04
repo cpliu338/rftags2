@@ -19,6 +19,7 @@ import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.auth.login.LoginException;
 import javax.sql.DataSource;
+import wsd.m2.AuthenticateEjb;
 
 public class LdapLoginModule implements LoginModule {
 
@@ -37,6 +38,8 @@ public class LdapLoginModule implements LoginModule {
     //@Resource(name="churchDB")
     private DataSource dataSource;
     
+    private AuthenticateEjb authenticateEjb;
+    
     public static String test(String env, String lookup) throws NamingException {
         Context initCtx = new InitialContext();
         Context envCtx = (Context) initCtx.lookup(env);
@@ -53,10 +56,10 @@ public class LdapLoginModule implements LoginModule {
       this.options = options;
       try {
         Context initCtx = new InitialContext();
-        Context envCtx = (Context) initCtx.lookup("java:comp/env");
+        Context envCtx = (Context) initCtx.lookup("java:global");
 
-        // Look up our data source
-          dataSource = (DataSource)envCtx.lookup("mysql2"); 
+        // Look up our data source authenticateEjb
+          authenticateEjb = (AuthenticateEjb)envCtx.lookup("rftags2/AuthenticateEjb"); 
       } catch (NamingException | RuntimeException ex) {
           Logger.getLogger(LdapLoginModule.class.getName()).log(Level.SEVERE, null, ex);
       }
@@ -69,6 +72,13 @@ public class LdapLoginModule implements LoginModule {
   
     private boolean bind(String user, String pwd) throws NamingException {
 	// Set up environment for creating initial context
+        // java:global/rftags2/AuthenticateEjb
+        if (authenticateEjb.authenticate(user, pwd)) return true;
+        Context initCtx = new InitialContext();
+        Context envCtx = (Context) initCtx.lookup("java:global");
+        Object o = envCtx.lookup("rftags2/AuthenticateEjb");
+        Logger.getLogger(this.getClass().getName()).log(Level.INFO,
+            (o==null) ? "None looked up" : o.getClass().getName());
 	Hashtable env = new Hashtable(11);
 	env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
 	env.put(Context.SECURITY_AUTHENTICATION, "simple");
@@ -99,8 +109,9 @@ public class LdapLoginModule implements LoginModule {
         String password = String.valueOf(((PasswordCallback) callbacks[1])
           .getPassword());
         try {
-            bind(name, password);
-        } catch (NamingException ex) {
+            //bind(name, password);
+            authenticateEjb.authenticate(name, password);
+        } catch (RuntimeException ex) {
             throw new LoginException("Authentication failed");
         }
         /*
@@ -148,6 +159,13 @@ public class LdapLoginModule implements LoginModule {
   
     public void checkGroups() {
         userGroups.add("logged_in");
+        authenticateEjb.checkGroups(userGroups);
+        if (userGroups.size() > 1) {
+            for (String role:userGroups) {
+                Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Found role {0}", role);
+            }
+            return;
+        }
         if (dataSource != null) {
             try (Connection conn = dataSource.getConnection(); 
                     PreparedStatement stmt = conn.prepareStatement(SQL_TEMPLATE)) {
