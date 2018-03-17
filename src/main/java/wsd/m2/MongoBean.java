@@ -13,7 +13,7 @@ import javax.naming.*;
  * @author cpliu
  */
 @Singleton
-public class MongoBean {
+public class MongoBean implements java.io.Serializable {
     
     MongoClient mongoClient;
     MongoDatabase db;
@@ -21,17 +21,10 @@ public class MongoBean {
     @PostConstruct
     public void init() {
         if (mongoClient == null) {
-            try {
-                String env = "java:comp/env";
-                Context initCtx = new InitialContext();
-                Context envCtx = (Context) initCtx.lookup(env);
-                mongoClient = (MongoClient)envCtx.lookup("mongoClient");
-            } catch (NamingException ex) {
-                Logger.getLogger(MongoBean.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            mongoClient = new MongoClient("localhost:27017");
         }
         if (db == null && mongoClient != null) {
-            db = mongoClient.getDatabase("therismos");
+            db = mongoClient.getDatabase("test");
         }
     }
     
