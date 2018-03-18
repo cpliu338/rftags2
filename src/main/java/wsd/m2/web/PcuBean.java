@@ -2,15 +2,13 @@ package wsd.m2.web;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.UpdateOptions;
 import javax.inject.Named;
 import rf.model.Pcu;
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Resource;
-import org.bson.BsonDocument;
 import org.bson.Document;
 import org.primefaces.event.FileUploadEvent;
 import org.primefaces.model.UploadedFile;
@@ -27,7 +25,7 @@ public class PcuBean implements java.io.Serializable {
     private String source;
     @Resource
     String datapath;
-    private MongoCollection collection;
+    private MongoCollection<Document> collection;
     
     @javax.inject.Inject
     MongoBean mongoBean;
@@ -55,12 +53,15 @@ public class PcuBean implements java.io.Serializable {
     
     private void handleCsv(BufferedReader rdr) throws IOException, CsvFormatException {
             Pcu pcu = Pcu.parseFromCsv(rdr);
-            collection = mongoBean.getDatabase().getCollection("pcus");
-            long d = collection.deleteMany(Filters.eq("header.name", ((Document)pcu.getDoc().get("header")).getString("name"))).getDeletedCount();
+            collection = mongoBean.getDatabase().getCollection("pcus", Document.class);
+            long d = collection.replaceOne(
+                Filters.eq("header.name", pcu.getDoc().get("header", Document.class).getString("name")),
+                pcu.getDoc(),
+                new UpdateOptions().upsert(true)
+                ).getMatchedCount();
             if (d>0) {
-                Logger.getLogger(PcuBean.class.getName()).log(Level.INFO, "Found and deleted existing {0} docs", d);
+                Logger.getLogger(PcuBean.class.getName()).log(Level.INFO, "Matched {0} docs", d);
             }
-            collection.insertOne(pcu.getDoc());
             dest = pcu.getDoc().toJson();
     }
     
