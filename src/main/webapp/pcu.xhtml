@@ -13,20 +13,14 @@
             </ui:define>
             <ui:define name="content">
                 <h:form id="main-form">
-                    <p:tabView>
-                        <p:tab title="Pasted text">
-                    <p:fieldset legend="source"/>
-                    <p:inputTextarea autoResize="false" rows="15" cols="30" value="#{pcuBean.source}"/>
-                    <p:commandButton update="result1" action="#{pcuBean.invoke()}" value="Action"/>
-                    <p:fieldset legend="result"/>
-                    <p:inputTextarea id="result1" readonly="true" autoResize="false" rows="15" cols="30" value="#{pcuBean.dest}"/>
-                        </p:tab>
-                        <p:tab title="Upload file">
-                            <p:fileUpload update="result2" fileUploadListener="#{pcuBean.handleFileUpload}" />
-                            <p:outputLabel for="result2" value="File"/>
-                            <p:inputTextarea id="result2" readonly="true" autoResize="false" rows="15" cols="30" value="#{pcuBean.dest}"/>
-                        </p:tab>
-                    </p:tabView>
+                    <p:dataTable value="#{pcuBean.model}" var="doc" lazy="true" scrollRows="3" scrollable="true" liveScroll="true" scrollHeight="50">
+                        <p:column headerText="Name" footerText="Name">
+                            <h:outputText title="#{doc.getString('tooltip')}" id="name" value="Name: #{doc.getString('Name')}" />
+                        </p:column>
+                        <p:column headerText="Name" footerText="Name">
+                            <h:outputText value="Name: #{doc.getString('Description')}" />
+                        </p:column>
+                    </p:dataTable>
                 </h:form>
             </ui:define>
         </ui:composition>

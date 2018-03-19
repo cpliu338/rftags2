@@ -6,11 +6,15 @@ import com.mongodb.client.model.UpdateOptions;
 import javax.inject.Named;
 import rf.model.Pcu;
 import java.io.*;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import javax.annotation.Resource;
-import org.bson.Document;
+import org.bson.*;
 import org.primefaces.event.FileUploadEvent;
+import org.primefaces.model.LazyDataModel;
+import org.primefaces.model.SortOrder;
 import org.primefaces.model.UploadedFile;
 import rf.model.CsvFormatException;
 import wsd.m2.MongoBean;
@@ -29,14 +33,32 @@ public class PcuBean implements java.io.Serializable {
     
     @javax.inject.Inject
     MongoBean mongoBean;
+    
+    private LazyDataModel<Document> model;
+
+    public LazyDataModel<Document> getModel() {
+        return model;
+    }
 
     @javax.annotation.PostConstruct
     public void init() {
-        if (mongoBean == null)
-            dest = "No mongo bean";
-        else {
-            dest = "OK";
-        }
+        collection = mongoBean.getDatabase().getCollection("pcus", Document.class);
+        model = new LazyDataModel<Document>() {
+            @Override
+            public List<Document> load(int first, int pageSize, String sortField, SortOrder sortOrder, Map<String,Object> filters) {
+                Document doc = collection.find(new Document(), Document.class).first();
+                List<Document> arr = doc.get("analogs", List.class);
+                this.setRowCount(arr.size());
+                List<Document> result = arr.stream().skip(first).limit(pageSize).map(d->{
+                    d.append("tooltip", d.toJson());
+                    return d;
+                }).collect(Collectors.toList());
+                Logger.getLogger(PcuBean.class.getName()).log(Level.INFO, "load: {0}, {1}", new Object[]{
+                    first, pageSize
+                });
+                return result;
+            }
+        };
     }
     
     public void handleFileUpload(FileUploadEvent event) {
@@ -53,7 +75,6 @@ public class PcuBean implements java.io.Serializable {
     
     private void handleCsv(BufferedReader rdr) throws IOException, CsvFormatException {
             Pcu pcu = Pcu.parseFromCsv(rdr);
-            collection = mongoBean.getDatabase().getCollection("pcus", Document.class);
             long d = collection.replaceOne(
                 Filters.eq("header.name", pcu.getDoc().get("header", Document.class).getString("name")),
                 pcu.getDoc(),
