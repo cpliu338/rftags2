@@ -11,12 +11,17 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
+import javax.faces.application.FacesMessage;
+import javax.faces.context.FacesContext;
 import org.bson.*;
+import org.bson.conversions.Bson;
+import org.primefaces.context.RequestContext;
 import org.primefaces.event.FileUploadEvent;
 import org.primefaces.model.LazyDataModel;
 import org.primefaces.model.SortOrder;
 import org.primefaces.model.UploadedFile;
 import rf.model.CsvFormatException;
+import rf.model.RfAnalogTag;
 import wsd.m2.MongoBean;
 /**
  *
@@ -25,91 +30,68 @@ import wsd.m2.MongoBean;
 @Named
 @javax.faces.view.ViewScoped
 public class PcuBean implements java.io.Serializable {
-    private String dest;
+    private RfAnalogTag tag;
+
+    public RfAnalogTag getTag() {
+        return tag;
+    }
     private String source;
+    private String filterUnit;
     @Resource
     String datapath;
-    private MongoCollection<Document> collection;
+    private MongoCollection<RfAnalogTag> collection;
     
     @javax.inject.Inject
     MongoBean mongoBean;
     
-    private LazyDataModel<Document> model;
+    private LazyDataModel<RfAnalogTag> model;
 
-    public LazyDataModel<Document> getModel() {
+    public LazyDataModel<RfAnalogTag> getModel() {
         return model;
     }
-
+    
+    public void filter() {
+        filterUnit = "MLD";
+        init();
+    }
+    
+    public PcuBean() {
+        filterUnit = "";
+    }
+    
     @javax.annotation.PostConstruct
     public void init() {
-        collection = mongoBean.getDatabase().getCollection("pcus", Document.class);
-        model = new LazyDataModel<Document>() {
+        collection = mongoBean.getDatabase().getCollection("wsd_rf_analogs", RfAnalogTag.class)
+                .withCodecRegistry(mongoBean.getPojoCodecRegistry());
+        model = new LazyDataModel<RfAnalogTag>() {
             @Override
-            public List<Document> load(int first, int pageSize, String sortField, SortOrder sortOrder, Map<String,Object> filters) {
-                Document doc = collection.find(new Document(), Document.class).first();
-                List<Document> arr = doc.get("analogs", List.class);
-                this.setRowCount(arr.size());
-                List<Document> result = arr.stream().skip(first).limit(pageSize).map(d->{
-                    d.append("tooltip", d.toJson());
-                    return d;
-                }).collect(Collectors.toList());
-                Logger.getLogger(PcuBean.class.getName()).log(Level.INFO, "load: {0}, {1}", new Object[]{
-                    first, pageSize
-                });
-                return result;
+            public List<RfAnalogTag> load(int first, int pageSize, String sortField, SortOrder sortOrder, Map<String,Object> filters) {
+                Bson filter = filterUnit.length()==0 ? new Document() : Filters.eq("unit", PcuBean.this.filterUnit);
+                this.setRowCount((int)collection.count(filter));
+                final List<RfAnalogTag> arr = new ArrayList<>();
+                for (RfAnalogTag t:collection.find(filter, RfAnalogTag.class).skip(first).limit(pageSize)) {
+                    arr.add(t);
+                }
+                return arr;
             }
         };
-    }
-    
-    public void handleFileUpload(FileUploadEvent event) {
-        UploadedFile file = event.getFile();
-        try {
-            handleCsv(
-                new BufferedReader(new InputStreamReader(file.getInputstream()))
-            );
-        } catch (IOException | CsvFormatException ex) {
-            Logger.getLogger(PcuBean.class.getName()).log(Level.SEVERE, null, ex);
-            dest = ex.getMessage();
-        }
-    }
-    
-    private void handleCsv(BufferedReader rdr) throws IOException, CsvFormatException {
-            Pcu pcu = Pcu.parseFromCsv(rdr);
-            long d = collection.replaceOne(
-                Filters.eq("header.name", pcu.getDoc().get("header", Document.class).getString("name")),
-                pcu.getDoc(),
-                new UpdateOptions().upsert(true)
-                ).getMatchedCount();
-            if (d>0) {
-                Logger.getLogger(PcuBean.class.getName()).log(Level.INFO, "Matched {0} docs", d);
-            }
-            dest = pcu.getDoc().toJson();
+        tag = new RfAnalogTag();
     }
     
     public void invoke() {
-        //new Pcu();
-        try {
-            handleCsv(
-                    new BufferedReader(new StringReader(source))
-            );
-        } catch (IOException | CsvFormatException ex) {
-            Logger.getLogger(PcuBean.class.getName()).log(Level.SEVERE, null, ex);
-            dest = ex.getMessage();
-        }
+        collection.insertOne(tag);
+        FacesMessage msg = new FacesMessage("Saved "+tag.getName());
+        FacesContext.getCurrentInstance().addMessage(null, msg);
     }
-
-    /**
-     * @return the dest
-     */
-    public String getDest() {
-        return dest;
-    }
-
-    /**
-     * @param dest the dest to set
-     */
-    public void setDest(String dest) {
-        this.dest = dest;
+    
+    public void selectTag() {
+        Bson filter = Filters.eq("name", source);
+        tag = collection.find(filter).first();
+        Logger.getLogger(PcuBean.class.getName()).log(Level.INFO, "selecting:{0},found:{1}",
+                        new Object[]{ source, tag!=null
+                        });
+        if (tag == null) tag = new RfAnalogTag();
+        RequestContext.getCurrentInstance().execute("PF('dlg-edit').show()");
     }
 
     /**

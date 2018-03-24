@@ -1,48 +1,62 @@
 package rf.model;
 
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import javax.validation.constraints.*;
 
 /**
  *
  * @author cpliu
  */
 public class RfAnalogTag extends RfTag {
-    public static final String SUB_TYPE = "sub_type";
-    public static final String EU_TYPE = "eu_type";
-    public static final String UNIT = "unit";
-    public static final String MIN_EU = "min_eu";
-    public static final String MAX_EU = "max_eu";
-    public static final String LOLIMIT = "lolimit";
-    public static final String HILIMIT = "hilimit";
+    @Min(value=0)
+    @Max(value=99)
+    private int eu_type;
+    @Size(min=0, max=6)
+    private String unit;
+    @Digits(integer=15, fraction=5)
+    private double min_eu;
+
+    /**
+     * @return the eu_type
+     */
+    public int getEu_type() {
+        return eu_type;
+    }
+
+    /**
+     * @param eu_type the eu_type to set
+     */
+    public void setEu_type(int eu_type) {
+        this.eu_type = eu_type;
+    }
+
+    /**
+     * @return the unit
+     */
+    public String getUnit() {
+        return unit;
+    }
+
+    /**
+     * @param unit the unit to set
+     */
+    public void setUnit(String unit) {
+        this.unit = unit;
+    }
+
+    /**
+     * @return the min_eu
+     */
+    public double getMin_eu() {
+        return min_eu;
+    }
+
+    /**
+     * @param min_eu the min_eu to set
+     */
+    public void setMin_eu(double min_eu) {
+        this.min_eu = min_eu;
+    }
             
-    public static final String CSV_PATTERN = "analog_tag,offset,sub_type,eu_type,unit,min_eu,max_eu,lolimit,hilimit";
-    public static final String [] attributes = {TAG, OFFSET, SUB_TYPE,EU_TYPE,UNIT,MIN_EU,MAX_EU,LOLIMIT,HILIMIT};
-    public static final String [] types = {STRING, INTEGER, INTEGER, INTEGER, STRING, DECIMAL, DECIMAL, DECIMAL, DECIMAL};
-    //private CsvFormatException exception;
     
-    @Override
-    protected String [] getAttributes() { return attributes;}
-    
-    @Override
-    protected String getAttribute(int offset) {
-        return attributes[offset];
-    }
-    
-    @Override
-    protected String getType(int offset) {
-        return types[offset];
-    }
-    
-    protected RfAnalogTag() {}
-    
-    public static RfAnalogTag createFromCsv(String line) {
-        RfAnalogTag t = new RfAnalogTag();
-        try {
-            t.doc = t.parseCsvLine(line);
-        } catch (CsvFormatException ex) {
-            t.exception = ex;
-        }
-        return t;
-    }
 }

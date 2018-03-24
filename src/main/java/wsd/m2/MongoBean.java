@@ -7,6 +7,10 @@ import java.util.logging.*;
 import javax.annotation.*;
 import javax.inject.Singleton;
 import javax.naming.*;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.pojo.PojoCodecProvider;
 
 /**
  *
@@ -17,6 +21,12 @@ public class MongoBean implements java.io.Serializable {
     
     MongoClient mongoClient;
     MongoDatabase db;
+    CodecRegistry pojoCodecRegistry;
+
+    public CodecRegistry getPojoCodecRegistry() {
+        return pojoCodecRegistry;
+    }
+    
     
     @PostConstruct
     public void init() {
@@ -26,6 +36,8 @@ public class MongoBean implements java.io.Serializable {
         if (db == null && mongoClient != null) {
             db = mongoClient.getDatabase("test");
         }
+        pojoCodecRegistry =fromRegistries(MongoClient.getDefaultCodecRegistry(),
+                fromProviders(PojoCodecProvider.builder().automatic(true).build()));
     }
     
     public MongoDatabase getDatabase() {

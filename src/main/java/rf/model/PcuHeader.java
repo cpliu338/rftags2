@@ -12,23 +12,10 @@ public class PcuHeader extends RfTag {
             
     public static final String CSV_PATTERN = "name,address,desc";
     public static final String [] attributes = {PCUNAME, ADDRESS, DESC};
-    public static final String [] types = {STRING, INTEGER, STRING};
     
-    @Override
-    protected String [] getAttributes() { return attributes;}
-    
-    @Override
-    protected String getAttribute(int offset) {
-        return attributes[offset];
-    }
-    
-    @Override
-    protected String getType(int offset) {
-        return types[offset];
-    }
     
     protected PcuHeader() {}
-    
+    /*
     public static PcuHeader createFromCsv(String line) {
         PcuHeader t = new PcuHeader();
         try {
@@ -38,4 +25,5 @@ public class PcuHeader extends RfTag {
         }
         return t;
     }
+    */
 }

@@ -13,12 +13,41 @@
             </ui:define>
             <ui:define name="content">
                 <h:form id="main-form">
-                    <p:dataTable value="#{pcuBean.model}" var="doc" lazy="true" scrollRows="3" scrollable="true" liveScroll="true" scrollHeight="50">
+                    <p:commandButton value="Filter" action="#{pcuBean.filter}" update="tag-list"/>
+                    <p:dialog  widgetVar="dlg-edit">
+                    <p:panelGrid columnClasses="label,value,error" columns="3">
+                        <p:outputLabel for="name" value="Name"/>
+                        <p:inputText id="name" value="#{pcuBean.tag.name}"/>
+                        <p:message for="name"/>
+                        <p:outputLabel for="desc" value="Desc"/>
+                        <p:inputText value="#{pcuBean.tag.desc}" id="desc"/>
+                        <p:message for="desc"/>
+                        <p:outputLabel for="offset" value="Offset"/>
+                        <p:inputText value="#{pcuBean.tag.offset}" id="offset"/>
+                        <p:message for="offset"/>
+                        <p:outputLabel for="unit" value="Unit"/>
+                        <p:inputText value="#{pcuBean.tag.unit}" id="unit"/>
+                        <p:message for="unit"/>
+                        <p:outputLabel for="eu-type" value="Eu Type"/>
+                        <p:inputText value="#{pcuBean.tag.eu_type}" id="eu-type"/>
+                        <p:message for="eu-type"/>
+                        <p:outputLabel for="min-eu" value="Min Eu"/>
+                        <p:inputText value="#{pcuBean.tag.min_eu}" id="min-eu"/>
+                        <p:message for="min-eu"/>
+                    </p:panelGrid>
+                    <p:commandButton value="Save" action="#{pcuBean.invoke}" update="@form"/>
+                    </p:dialog>
+                    <p:growl autoUpdate="true"/>
+                    <p:dataTable id="tag-list" value="#{pcuBean.model}" var="tag" lazy="true" rows="10" paginator="true">
                         <p:column headerText="Name" footerText="Name">
-                            <h:outputText title="#{doc.getString('tooltip')}" id="name" value="Name: #{doc.getString('Name')}" />
+                            <h:outputText id="name" value="#{tag.name}" />
+                            <p:commandButton icon="fa fa-edit" value="Edit" 
+                                     action="#{pcuBean.selectTag}" update="@form">
+                                <f:setPropertyActionListener value="#{tag.name}" target="#{pcuBean.source}" />
+                            </p:commandButton>
                         </p:column>
-                        <p:column headerText="Name" footerText="Name">
-                            <h:outputText value="Name: #{doc.getString('Description')}" />
+                        <p:column headerText="Desc" footerText="Desc">
+                            <h:outputText value="#{tag.desc}" />
                         </p:column>
                     </p:dataTable>
                 </h:form>
