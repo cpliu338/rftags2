@@ -35,7 +35,7 @@
                         <p:inputText value="#{pcuBean.tag.min_eu}" id="min-eu"/>
                         <p:message for="min-eu"/>
                     </p:panelGrid>
-                    <p:commandButton value="Save" action="#{pcuBean.invoke}" update="@form"/>
+                        <p:commandButton value="Save" oncomplete="PF('dlg-edit').show()" action="#{pcuBean.invoke}" update="@form"/>
                     </p:dialog>
                     <p:growl autoUpdate="true"/>
                     <p:dataTable id="tag-list" value="#{pcuBean.model}" var="tag" lazy="true" rows="10" paginator="true">
