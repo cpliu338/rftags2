@@ -6,6 +6,11 @@
     <h:head>
         <title>Wizard Panel</title>
     </h:head>
+    <f:metadata>
+        <f:viewParam name="tagName" value="#{sampleBean.tagName}"/>
+        <f:viewAction action="#{sampleBean.updateTag}"/>
+    </f:metadata>
+        
     <h:body>
         <ui:composition template="./WEB-INF/mainTemplate.xhtml">
             <ui:define name="title">
@@ -13,22 +18,31 @@
             </ui:define>
             <ui:define name="content">
                 <h:form id="main-form">
-                    <p:wizard><!-- flowListener=" # {configWizard.onFlowProcess}"-->
-                        <p:tab id="step0" title="Start">
-                            <h:outputText value="Start Now"/>
-                        </p:tab>
-                        <p:tab id="step1" title="Step 1">
-                            <h:panelGrid columns="3" columnClasses="label, value">
-                                <p:outputLabel for="content" value="Contents:"/>
-                                <p:inputText id="content" validator="#{configWizard.validateContent}" value="#{configWizard.contents}"/>
-                            </h:panelGrid>
-                                <p:message for="content"/>
-                        </p:tab>
-                        <p:tab id="step2" title="Step 2">
-                            <p:messages/>
-                                <h:outputText value="Step 2 Now"/>
-                        </p:tab>
-                    </p:wizard>
+                    <p:panelGrid columns="2">
+                        <p:inputText id="tag1" value="#{sampleBean.tag1}"/>
+                        <p:commandButton value="assemble" actionListener="#{sampleBean.assemble()}" process="@this tag1" update="name" />
+                    </p:panelGrid>
+                    <p:panelGrid columns="6" columnClasses="label,value,error,label,value,error">
+                        <p:outputLabel for="name" value="Name" />
+                        <p:inputText id="name" value="#{sampleBean.tag.name}"/>
+                        <p:message for="name" />
+                        <p:outputLabel for="desc" value="Desc" />
+                        <p:inputText id="desc" value="#{sampleBean.tag.desc}"/>
+                        <p:message for="desc" />
+                        <p:outputLabel for="offset" value="Offset" />
+                        <p:inputText id="offset" value="#{sampleBean.tag.offset}"/>
+                        <p:message for="offset" />
+                        <p:outputLabel for="eu-type" value="EU type" />
+                        <p:inputText id="eu-type" value="#{sampleBean.tag.eu_type}"/>
+                        <p:message for="eu-type" />
+                        <p:outputLabel for="min-eu" value="Min EU" />
+                        <p:inputText id="min-eu" value="#{sampleBean.tag.min_eu}"/>
+                        <p:message for="min-eu" />
+                        <p:outputLabel for="unit" value="Unit" />
+                        <p:inputText id="unit" value="#{sampleBean.tag.unit}"/>
+                        <p:message for="unit" />
+                        <p:commandButton value="Save" />
+                    </p:panelGrid>
                 </h:form>
             </ui:define>
         </ui:composition>

@@ -1,50 +1,35 @@
 package wsd.m2.web;
 
-import javax.faces.application.FacesMessage;
-import javax.faces.component.UIComponent;
-import javax.faces.context.FacesContext;
-import javax.faces.validator.ValidatorException;
-import org.primefaces.event.FlowEvent;
+import rf.model.RfTag;
+import wsd.m2.MongoBean;
+
 
 /**
  *
  * @author cpliu
  */
-@javax.faces.bean.ManagedBean
-@javax.faces.bean.ViewScoped
-public class ConfigWizard implements java.io.Serializable {
-    private String contents;
+public abstract class ConfigWizard {
     
-    public String onFlowProcess(FlowEvent event) {
-        if(contents.startsWith("B")) {
-            FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_WARN, event.getOldStep(), "Stay here");
-            FacesContext.getCurrentInstance().addMessage("", msg);
-            return event.getOldStep();
-        }
-        else {
-            return event.getNewStep();
-        }
-    }
+    protected RfTag tag;
+    private String tag1;
     
-    public void validateContent(FacesContext context, UIComponent component, Object value) throws ValidatorException {
-        String submittedValue = (String)value;
-        if (submittedValue.startsWith("A")) {
-            throw new ValidatorException(new FacesMessage(FacesMessage.SEVERITY_ERROR, "Should not strt with A", "Should not strt with A"));
-        }
+    public abstract MongoBean getMongoBean();
+    
+    public void chosenTag1() {
+        tag.setName(tag1.toUpperCase());
     }
 
     /**
-     * @return the contents
+     * @return the tag1
      */
-    public String getContents() {
-        return contents;
+    public String getTag1() {
+        return tag1;
     }
 
     /**
-     * @param contents the contents to set
+     * @param tag1 the tag1 to set
      */
-    public void setContents(String contents) {
-        this.contents = contents;
+    public void setTag1(String tag1) {
+        this.tag1 = tag1;
     }
-
 }
