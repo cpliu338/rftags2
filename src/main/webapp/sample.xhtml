@@ -8,15 +8,21 @@
     </h:head>
     <h:body>
         <h:form id="main-form">
-            P1:<p:autoComplete completeMethod="#{sampleBean.completeIt}" minQueryLength="1" 
-                            value="#{sampleBean.p1}">
-                <p:ajax event="itemSelect" update="@form" listener="#{sampleBean.onItemSelect}"/>
-            </p:autoComplete>
+            <p:dialog id="dlg-exception" widgetVar="dlg-ex">
+                View Expired
+            </p:dialog>
+            <p:dialog id='dlg-popup' widgetVar="dlg-pop">
+                This is a pop up dialog
+            </p:dialog>
+            <h:outputText value="Counter: #{sampleBean.counter}" id="counter"/>
             <br/>
-            P2:<h:outputText id="p2" value="#{sampleBean.p2}"/>
-            <br/>
-            <p:commandButton value="action" action="#{sampleBean.action()}" update="@form"/>
+            <p:commandButton value="test" action="#{sampleBean.testFlow()}" update="@form"/>
+            <p:commandButton value="increment" action="#{sampleBean.incCounter()}" update="@form"/>
+            <p:commandButton value="pop up" action="#{sampleBean.incCounter()}" update="@form" 
+                             oncomplete="PF('dlg-pop').show()" />
             <p:messages id="msg" autoUpdate="true"/>
+            <p:ajaxExceptionHandler type="javax.faces.application.ViewExpiredException" 
+                                    onexception="PF('dlg-ex').show()" update="dlg-exception" />
         </h:form>
     </h:body>
 </html>

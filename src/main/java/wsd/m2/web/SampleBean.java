@@ -21,54 +21,39 @@ import wsd.m2.MongoBean;
  */
 @Named
 @ViewScoped
-public class SampleBean extends ConfigWizard implements Serializable {
+public class SampleBean implements Serializable {
     
     @javax.inject.Inject
     MongoBean mongoBean;
     
-    private String tagName;
+    private int counter;
     
     @PostConstruct
     public void init() {
-        super.tag = new RfAnalogTag();
+        counter = 0;
     }
     
-    public void updateTag() {
-        RfAnalogTag tag1 = (RfAnalogTag)tag;
-        tag1.setDesc(tagName.substring(1));
-        tag1.setName(tagName);
-        tag1.setEu_type(1);
-        tag1.setMin_eu(2.0);
-        tag1.setOffset(0);
-        tag1.setUnit("M");
-        Logger.getLogger(SampleBean.class.getName()).log(Level.INFO, "Updated tag {0}", tag.getName());
-    }
-
-    @Override
-    public MongoBean getMongoBean() {
-        return mongoBean;
+    public void testFlow() {
+        throw new javax.faces.application.ViewExpiredException();
     }
     
-    public void assemble() {
-        super.chosenTag1();
-        Logger.getLogger(SampleBean.class.getName()).log(Level.INFO, "tag name {0} after assemble", tag.getName());
-    }
-    
-    public RfAnalogTag getTag() { return (RfAnalogTag)tag;}
-    public void setTag(RfAnalogTag t) { tag = t;}
-
-    /**
-     * @return the tagName
-     */
-    public String getTagName() {
-        return tagName;
+    public void incCounter() {
+        counter++;
+        Logger.getLogger(SampleBean.class.getName()).log(Level.INFO, "Updated counter {0}", counter);
     }
 
     /**
-     * @param tagName the tagName to set
+     * @return the counter
      */
-    public void setTagName(String tagName) {
-        Logger.getLogger(SampleBean.class.getName()).log(Level.INFO, "set tagName {0}", tagName);
-        this.tagName = tagName;
+    public int getCounter() {
+        return counter;
     }
+
+    /**
+     * @param counter the counter to set
+     */
+    public void setCounter(int counter) {
+        this.counter = counter;
+    }
+
 }
