@@ -2,7 +2,8 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://xmlns.jcp.org/jsf/html"
-      xmlns:p="http://primefaces.org/ui">
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
     <h:head>
         <title>Facelet Title</title>
     </h:head>
@@ -12,14 +13,22 @@
                 View Expired
             </p:dialog>
             <p:dialog id='dlg-popup' widgetVar="dlg-pop">
-                This is a pop up dialog
+                <p:outputLabel value="Counter"/>
+                <p:inputText value="#{sampleBean.counter3}" id="counter3"/>
+                <p:commandButton value="test" action="#{sampleBean.testFlow()}" update="@form"/>
             </p:dialog>
-            <h:outputText value="Counter: #{sampleBean.counter}" id="counter"/>
-            <br/>
-            <p:commandButton value="test" action="#{sampleBean.testFlow()}" update="@form"/>
-            <p:commandButton value="increment" action="#{sampleBean.incCounter()}" update="@form"/>
-            <p:commandButton value="pop up" action="#{sampleBean.incCounter()}" update="@form" 
-                             oncomplete="PF('dlg-pop').show()" />
+            
+            <p:dataTable value="#{sampleBean.model}" var="row">
+                <p:column>
+                    #{row[1]}
+                </p:column>
+                <p:column>
+                    <p:commandButton value="pop up" action="#{sampleBean.incCounter()}" update="@form" 
+                             oncomplete="PF('dlg-pop').show()" >
+                        <f:setPropertyActionListener target="#{sampleBean.counter}" value="#{row[0]}"/>
+                    </p:commandButton>
+                </p:column>
+            </p:dataTable>
             <p:messages id="msg" autoUpdate="true"/>
             <p:ajaxExceptionHandler type="javax.faces.application.ViewExpiredException" 
                                     onexception="PF('dlg-ex').show()" update="dlg-exception" />
