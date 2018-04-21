@@ -9,9 +9,6 @@
     </h:head>
     <h:body>
         <h:form id="main-form">
-            <p:dialog id="dlg-exception" widgetVar="dlg-ex">
-                View Expired
-            </p:dialog>
             <p:dialog id='dlg-popup' widgetVar="dlg-pop">
                 <p:outputLabel value="Counter"/>
                 <p:inputText value="#{sampleBean.counter3}" id="counter3"/>
@@ -30,8 +27,6 @@
                 </p:column>
             </p:dataTable>
             <p:messages id="msg" autoUpdate="true"/>
-            <p:ajaxExceptionHandler type="javax.faces.application.ViewExpiredException" 
-                                    onexception="PF('dlg-ex').show()" update="dlg-exception" />
         </h:form>
     </h:body>
 </html>

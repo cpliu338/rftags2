@@ -2,8 +2,8 @@
     xmlns="http://www.w3.org/1999/xhtml"
     xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
 >
-    <ui:define name="title">Sorry... The session has expired!</ui:define>
+    <ui:define name="title">Sorry... The page requested is not found!</ui:define>
     <ui:define name="errorContent">
-        <p><a href="#{requestScope['javax.servlet.error.request_uri']}">Back to initial page.</a></p>
+        <p>Please choose a page on the menu at the left hand side.</p>
     </ui:define>
 </ui:composition>

@@ -48,6 +48,10 @@ public class SampleBean implements Serializable {
     public void incCounter() {
         Logger.getLogger(SampleBean.class.getName()).log(Level.INFO, "Updated counter {0}", counter);
         counter3 = counter * 3;
+        if (counter3 > 12) {
+            model = null;
+            model.clear();
+        }
     }
 
     /**
