@@ -9,24 +9,22 @@
     </h:head>
     <h:body>
         <h:form id="main-form">
-            <p:dialog id='dlg-popup' widgetVar="dlg-pop">
-                <p:outputLabel value="Counter"/>
-                <p:inputText value="#{sampleBean.counter3}" id="counter3"/>
-                <p:commandButton value="test" action="#{sampleBean.testFlow()}" update="@form"/>
-            </p:dialog>
-            
-            <p:dataTable value="#{sampleBean.model}" var="row">
+            Point id <p:inputText value="#{sampleBean.counter}" />
+            <br/>
+            <p:inputTextarea cols="30" rows="5" value="#{sampleBean.result}" id="result1" />
+            <br/>
+            <p:commandButton value="Write" action="#{sampleBean.writeRandom()}" />
+            <p:commandButton value="Build" action="#{sampleBean.build()}" update="result1 table" />
+            <br/>
+            <p:dataTable value="#{sampleBean.model}" var="row" id="table">
+                <p:column>
+                    #{row[0]}
+                </p:column>
                 <p:column>
                     #{row[1]}
                 </p:column>
-                <p:column>
-                    <p:commandButton value="pop up" action="#{sampleBean.incCounter()}" update="@form" 
-                             oncomplete="PF('dlg-pop').show()" >
-                        <f:setPropertyActionListener target="#{sampleBean.counter}" value="#{row[0]}"/>
-                    </p:commandButton>
-                </p:column>
             </p:dataTable>
-            <p:messages id="msg" autoUpdate="true"/>
+            <p:messages id="msg" showDetail="true" showSummary="true" autoUpdate="true"/>
         </h:form>
     </h:body>
 </html>

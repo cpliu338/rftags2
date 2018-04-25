@@ -1,18 +1,22 @@
 package wsd.m2.web;
 
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Accumulators;
+import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.BsonField;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Sorts;
 import java.io.Serializable;
 import javax.faces.view.ViewScoped;
 import javax.inject.Named;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.logging.Level;
 import java.util.logging.*;
 import javax.annotation.PostConstruct;
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
-import javax.faces.event.AjaxBehaviorEvent;
-import org.primefaces.event.SelectEvent;
-import rf.model.RfAnalogTag;
+import org.bson.*;
+import org.bson.conversions.Bson;
 import wsd.m2.MongoBean;
 
 /**
@@ -27,12 +31,13 @@ public class SampleBean implements Serializable {
     MongoBean mongoBean;
     
     private int counter, counter3;
-    
-    private List<Integer[]> model;
+    private MongoCollection<Document> coll;
+    private String result;
+    private List<Object[]> model;
     
     @PostConstruct
     public void init() {
-        counter = 0;
+        coll = mongoBean.getDatabase().getCollection("points", Document.class);
         model = new ArrayList<>();
         for (int i=0; i<8; i++) {
             Integer[] ir = new Integer[2];
@@ -41,16 +46,82 @@ public class SampleBean implements Serializable {
         }
     }
     
-    public void testFlow() {
-        Logger.getLogger(SampleBean.class.getName()).log(Level.INFO, "Updating counter");
+    public void writeRandom() {
+        Document last = coll.find(Filters.eq("point_id", counter)).sort(Sorts.descending("time")).first();
+        Date start = last.getDate("time");
+        Double value = last.getDouble("value");
+        Logger.getLogger(SampleBean.class.getName()).log(Level.INFO, "Starting from {0} with value {1}", 
+                new Object[] {start, value});
+        long time = System.currentTimeMillis();
+        int count = 0;
+        for (int i=0; i<100; i++) {
+            start.setTime(new Double(start.getTime() + (1000 + Math.random() * 100000.0)).longValue());
+            value += (Math.random()-0.5) * 6;
+            if (value < 0.001) {
+                value = 0.0;
+                continue;
+            }
+            if (value > 5.999) {
+                value = 6.0;
+                continue;
+            }
+            Document d = new Document("time", start).append("point_id", this.counter).append("value", value);
+            count++;
+            coll.insertOne(d);
+        }
+        time = System.currentTimeMillis() - time;
+        FacesMessage msg = new FacesMessage();
+        msg.setDetail("Inserted doc:" + count);
+        msg.setSummary("Time required in ms:" + time);
+        FacesContext.getCurrentInstance().addMessage(null, msg);
     }
     
-    public void incCounter() {
+    /**
+     * db.points.aggregate([ 
+     * {$match: {point_id:1}}, 
+     * {$project: {_id:0, value:1, "timestamp": {$subtract: ["$time", new Date ('1970-01-01')]}}}, 
+     * {$project: {value: 1, "time2" : {$divide: ["$timestamp", 60000]} }}, 
+     * {$project: {value: 1, "timeslot": {$floor: "$time2"}}} 
+     * {$group: {_id: "$timeslot", average: {$avg: "$value"}} }
+     * ])
+     */
+    public void build() {
         Logger.getLogger(SampleBean.class.getName()).log(Level.INFO, "Updated counter {0}", counter);
-        counter3 = counter * 3;
-        if (counter3 > 12) {
-            model = null;
-            model.clear();
+        List<Bson> aggregates = new ArrayList<>();
+        BsonInt32 one = new BsonInt32(1);
+        BsonArray ar1 = new BsonArray();
+        ar1.add(new BsonString("$time"));
+        ar1.add(new BsonDateTime(0L));
+        BsonDocument result1 =
+        new BsonDocument("timestamp",
+            new BsonDocument("$subtract", ar1)
+        ).append("_id", new BsonInt32(0)).append("value", one);
+        BsonArray ar2 = new BsonArray();
+        ar2.add(new BsonString("$timestamp"));
+        ar2.add(new BsonInt32(60000));
+        BsonDocument result2 =
+        new BsonDocument("time2",
+            new BsonDocument("$divide", ar2)
+        ).append("value", one);
+        BsonDocument result3 =
+        new BsonDocument("timeslot",
+            new BsonDocument("$floor", new BsonString("$time2"))
+        ).append("value", one);
+        Bson result4 = Aggregates.group("$timeslot", new BsonField("average", new BsonDocument("$avg", new BsonString("$value"))));
+        result = result4.toString();
+        aggregates = Arrays.asList(
+            Aggregates.project(result1),
+            Aggregates.project(result2),
+            Aggregates.project(result3),
+            result4,
+            Aggregates.limit(20)
+        );
+        model.clear();
+        for (Document d : coll.aggregate(aggregates)) {
+            model.add(new Object[] {
+                d.getDouble("_id"),
+                d.getDouble("average")
+            });
         }
     }
 
@@ -71,7 +142,7 @@ public class SampleBean implements Serializable {
     /**
      * @return the model
      */
-    public List<Integer[]> getModel() {
+    public List<Object[]> getModel() {
         return model;
     }
 
@@ -87,6 +158,20 @@ public class SampleBean implements Serializable {
      */
     public void setCounter3(int counter3) {
         this.counter3 = counter3;
+    }
+
+    /**
+     * @return the result
+     */
+    public String getResult() {
+        return result;
+    }
+
+    /**
+     * @param result the result to set
+     */
+    public void setResult(String result) {
+        this.result = result;
     }
 
 }
