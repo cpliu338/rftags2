@@ -86,41 +86,29 @@ public class SampleBean implements Serializable {
      * ])
      */
     public void build() {
-        Logger.getLogger(SampleBean.class.getName()).log(Level.INFO, "Updated counter {0}", counter);
-        List<Bson> aggregates = new ArrayList<>();
-        BsonInt32 one = new BsonInt32(1);
-        BsonArray ar1 = new BsonArray();
-        ar1.add(new BsonString("$time"));
-        ar1.add(new BsonDateTime(0L));
-        BsonDocument result1 =
-        new BsonDocument("timestamp",
-            new BsonDocument("$subtract", ar1)
-        ).append("_id", new BsonInt32(0)).append("value", one);
-        BsonArray ar2 = new BsonArray();
-        ar2.add(new BsonString("$timestamp"));
-        ar2.add(new BsonInt32(60000));
-        BsonDocument result2 =
-        new BsonDocument("time2",
-            new BsonDocument("$divide", ar2)
-        ).append("value", one);
-        BsonDocument result3 =
-        new BsonDocument("timeslot",
-            new BsonDocument("$floor", new BsonString("$time2"))
-        ).append("value", one);
-        Bson result4 = Aggregates.group("$timeslot", new BsonField("average", new BsonDocument("$avg", new BsonString("$value"))));
-        result = result4.toString();
-        aggregates = Arrays.asList(
-            Aggregates.project(result1),
-            Aggregates.project(result2),
-            Aggregates.project(result3),
-            result4,
+        String json = "{\"$subtract\": [" +
+                "{\"$subtract\": [ \"$time\", new Date(0) ] }," +
+                "{ \"$mod\": [ " +
+                    "{ \"$subtract\": [ \"$time\", new Date(0) ] }," +
+                    "60000" +
+                "]}" + 
+            "]}";
+        BsonDocument _id = BsonDocument.parse(json);
+        Bson group = Aggregates.group(_id, 
+                new BsonField("average", new BsonDocument("$avg", new BsonString("$value"))),
+                new BsonField("max", new BsonDocument("$max", new BsonString("$value")))
+        );
+        List<Bson> aggregates = Arrays.asList(
+            group,
+            Aggregates.sort(new Document("_id", 1)),
             Aggregates.limit(20)
         );
         model.clear();
         for (Document d : coll.aggregate(aggregates)) {
             model.add(new Object[] {
-                d.getDouble("_id"),
-                d.getDouble("average")
+                new Date(d.getLong("_id")),
+                d.getDouble("average"),
+                d.getDouble("max")
             });
         }
     }
