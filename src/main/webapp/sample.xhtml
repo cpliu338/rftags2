@@ -14,14 +14,17 @@
             <p:inputTextarea cols="30" rows="5" value="#{sampleBean.result}" id="result1" />
             <br/>
             <p:commandButton value="Write" action="#{sampleBean.writeRandom()}" />
-            <p:commandButton value="Build" action="#{sampleBean.build()}" update="result1 table" />
+            <p:commandButton value="Build" action="#{sampleBean.aggregate()}" update="result1 table" />
             <br/>
             <p:dataTable value="#{sampleBean.model}" var="row" id="table">
-                <p:column>
+                <p:column headerText="time">
                     #{row[0]}
                 </p:column>
-                <p:column>
+                <p:column headerText="average">
                     #{row[1]}
+                </p:column>
+                <p:column headerText="max">
+                    #{row[2]}
                 </p:column>
             </p:dataTable>
             <p:messages id="msg" showDetail="true" showSummary="true" autoUpdate="true"/>

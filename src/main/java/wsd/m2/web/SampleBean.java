@@ -124,6 +124,63 @@ public class SampleBean implements Serializable {
             });
         }
     }
+    /**
+     * db.points.aggregate([
+    { "$group": {
+        "_id": {
+            "$subtract": [
+                { "$subtract": [ "$time", new Date("1970-01-01") ] },
+                { "$mod": [ 
+                    { "$subtract": [ "$time", new Date("1970-01-01") ] },
+                    1000 * 60
+                ]}
+            ]
+        },
+        "avg": { "$avg": "$value" }
+    }},
+    { "$sort": {"_id": 1}}
+    ])
+     */
+    public void aggregate() {
+        int interval = 60000;
+        // { "$subtract": [ "$time", new Date("1970-01-01") ] }
+        BsonDocument subtract = new BsonDocument("$subtract", 
+            new BsonArray(Arrays.asList(
+                new BsonString("$time"),
+                new BsonDateTime(0L)
+            ))
+        );
+        BsonDocument mod = new BsonDocument("$mod",
+            new BsonArray(Arrays.asList(
+                subtract, new BsonInt32(interval)
+            ))
+        );
+        //BsonDocument _id = new BsonDocument("_id", 
+        BsonDocument _id =  new BsonDocument("$subtract", 
+            new BsonArray(Arrays.asList(
+                subtract,
+                mod
+            ))
+        );
+        // "avg": { "$avg": "$value" }
+        Bson group = Aggregates.group(_id, 
+                new BsonField("average", new BsonDocument("$avg", new BsonString("$value"))),
+                new BsonField("max", new BsonDocument("$max", new BsonString("$value")))
+        );
+        List<Bson> aggregates = Arrays.asList(
+            group,
+            Aggregates.sort(new Document("_id", 1)),
+            Aggregates.limit(20)
+        );
+        model.clear();
+        for (Document d : coll.aggregate(aggregates)) {
+            model.add(new Object[] {
+                new Date(d.getLong("_id")),
+                d.getDouble("average"),
+                d.getDouble("max")
+            });
+        }
+    }
 
     /**
      * @return the counter
