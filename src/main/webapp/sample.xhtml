@@ -14,7 +14,7 @@
             <p:inputTextarea cols="30" rows="5" value="#{sampleBean.result}" id="result1" />
             <br/>
             <p:commandButton value="Write" action="#{sampleBean.writeRandom()}" />
-            <p:commandButton value="Build" action="#{sampleBean.build()}" update="result1 table" />
+            <p:commandButton value="Collect" action="#{sampleBean.collect()}" update="result1 table" />
             <br/>
             <p:dataTable value="#{sampleBean.model}" var="row" id="table">
                 <p:column headerText="time">

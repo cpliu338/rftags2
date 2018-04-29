@@ -1,7 +1,7 @@
 package wsd.m2.web;
 
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.model.Accumulators;
+import org.bson.Document;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.BsonField;
 import com.mongodb.client.model.Filters;
@@ -10,8 +10,13 @@ import java.io.Serializable;
 import javax.faces.view.ViewScoped;
 import javax.inject.Named;
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.logging.*;
+import java.util.stream.Collector;
 import javax.annotation.PostConstruct;
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
@@ -47,6 +52,32 @@ public class SampleBean implements Serializable {
     }
     
     public void writeRandom() {
+            Logger.getLogger(SampleBean.class.getName()).log(Level.INFO, "Counter is {0}", counter);
+        Document last = coll.find(Filters.eq("point_id", counter)).sort(Sorts.descending("time")).first();
+        Date start = last==null ? new Date(System.currentTimeMillis() - 180*86400000L) : last.getDate("time");
+            Logger.getLogger(SampleBean.class.getName()).log(Level.INFO, "Last null is {0}", last==null);
+        Integer value = last==null ? 0 : last.getInteger("value");
+        Logger.getLogger(SampleBean.class.getName()).log(Level.INFO, "Starting from {0} with value {1}", 
+                new Object[] {start, value});
+        long time = System.currentTimeMillis();
+        int count = 0;
+        for (int i=0; i<100; i++) {
+            start.setTime(new Double(start.getTime() + (3600000 + Math.random() * 100000000.0)).longValue());
+            if (Math.random() > 0.15) {
+                value = 1 - value;
+            }
+            Document d = new Document("time", start).append("point_id", this.counter).append("value", value);
+            count++;
+            coll.insertOne(d);
+        }
+        time = System.currentTimeMillis() - time;
+        FacesMessage msg = new FacesMessage();
+        msg.setDetail("Inserted doc:" + count);
+        msg.setSummary("Time required in ms:" + time);
+        FacesContext.getCurrentInstance().addMessage(null, msg);
+    }
+    
+    public void writeAnalog() {
         Document last = coll.find(Filters.eq("point_id", counter)).sort(Sorts.descending("time")).first();
         Date start = last.getDate("time");
         Double value = last.getDouble("value");
@@ -217,6 +248,111 @@ public class SampleBean implements Serializable {
      */
     public void setResult(String result) {
         this.result = result;
+    }
+    
+    public void collect() {
+        final Document accum = new Document()
+        .append("lastTime", null)
+        .append("lastValue", 0)
+        .append("ms_as_0", 0L)
+        .append("ms_as_1", 0L).append("ms_as_2", 0L).append("ms_as_3", 0L);
+        model.clear();
+        coll.find(Filters.eq("point_id", counter)).sort(Sorts.ascending("time")).forEach(new java.util.function.Consumer<Document>() {
+
+            @Override
+            public void accept(Document doc) {
+                if (accum.getDate("lastTime") == null) {
+                    accum.put("lastTime", doc.getDate("time"));
+                    accum.put("lastValue", doc.getInteger("value"));
+                    return;
+                }
+                Date lastTime = accum.getDate("lastTime");
+                Integer lastValue = accum.getInteger("lastValue");
+                if (doc.getInteger("value") == lastValue) return;
+                long elapsedMs = (doc.getDate("time").getTime() - lastTime.getTime());
+                String field = String.format("ms_as_%d", lastValue);
+                accum.put(field, accum.getLong(field)+elapsedMs);
+                accum.put("lastValue", doc.getInteger("value")); 
+                accum.put("lastTime", doc.getDate("time"));
+                    Object[] ar = new Object[3];
+                    ar[0] = accum.getDate("lastTime");
+                    ar[1] = accum.getLong("ms_as_0");
+                    ar[2] = accum.getLong("ms_as_1");
+                
+                model.add(ar);
+            }
+        });
+    }
+
+    private class MyListCollector<Document>
+        implements Collector<org.bson.Document, List<org.bson.Document>, List<Object[]>> {
+
+        Date lastTime;
+        Integer lastValue;
+        long ms_as_0, ms_as_1, ms_as_2, ms_as_3;
+        
+        @Override
+        public Supplier<List<org.bson.Document>> supplier() {
+            return ArrayList::new;
+        }
+
+        @Override
+        public BiConsumer<List<org.bson.Document>, org.bson.Document> accumulator() {
+            return (List<org.bson.Document> accum, org.bson.Document doc) ->
+            {
+                if (lastTime == null) {
+                    lastTime = doc.getDate("time");
+                    lastValue = doc.getInteger("value");
+                    return;
+                }
+                if (doc.getInteger("value") == lastValue) return;
+                long elapsedMs = (doc.getDate("time").getTime() - lastTime.getTime());
+                switch (lastValue) {
+                    case 0:
+                        ms_as_0 += elapsedMs; break;
+                    case 1:
+                        ms_as_1 += elapsedMs; break;
+                    case 2:
+                        ms_as_2 += elapsedMs; break;
+                    case 3:
+                        ms_as_3 += elapsedMs; break;
+                }
+                lastValue = doc.getInteger("value"); 
+                lastTime = doc.getDate("time");
+                org.bson.Document d = new org.bson.Document("time", lastTime);
+                accum.add(d.append("ms_as_0", ms_as_0)
+                    .append("ms_as_1", ms_as_1)
+                    .append("ms_as_2", ms_as_2)
+                    .append("ms_as_3", ms_as_3)
+                );
+            };
+        }
+
+        @Override
+        public BinaryOperator<List<org.bson.Document>> combiner() {
+            return (left,right) -> {left.addAll(right); return left;};
+        }
+
+        @Override
+        public Function<List<org.bson.Document>, List<Object[]>> finisher() {
+            return accum -> {
+                List<Object[]> result = new ArrayList<>();
+                for (org.bson.Document d : accum) {
+                    Object[] ar = new Object[3];
+                    ar[0] = d.getDate("time");
+                    ar[1] = d.getLong("ms_as_0");
+                    ar[2] = d.getLong("ms_as_1");
+                    result.add(ar);
+                }
+                return result;
+            };
+        }
+
+        @Override
+        public Set<Characteristics> characteristics() {
+            return Collections.EMPTY_SET;
+        }
+        
     }
 
 }
