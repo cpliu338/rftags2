@@ -1,12 +1,17 @@
 package wsd.m2.web;
 
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import org.bson.Document;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.BsonField;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Sorts;
 import java.io.Serializable;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import javax.faces.view.ViewScoped;
 import javax.inject.Named;
 import java.util.*;
@@ -251,108 +256,48 @@ public class SampleBean implements Serializable {
     }
     
     public void collect() {
+        Date startTime = java.sql.Timestamp.valueOf(LocalDateTime.parse("2017-11-05T16:05:30"));
+        Date endTime = java.sql.Timestamp.valueOf(LocalDateTime.parse("2017-11-08T06:00:00"));
+        Document startDoc = coll.find(Filters.and(Filters.eq("point_id", counter),
+                Filters.lte("time", startTime)
+        ), Document.class).sort(Sorts.descending("time")).first();
+        int startValue = (startDoc==null) ? 0 : startDoc.getInteger("value");
         final Document accum = new Document()
-        .append("lastTime", null)
-        .append("lastValue", 0)
+        .append("lastTime", startTime)
+        .append("lastValue", startValue)
         .append("ms_as_0", 0L)
         .append("ms_as_1", 0L).append("ms_as_2", 0L).append("ms_as_3", 0L);
         model.clear();
-        coll.find(Filters.eq("point_id", counter)).sort(Sorts.ascending("time")).forEach(new java.util.function.Consumer<Document>() {
-
-            @Override
-            public void accept(Document doc) {
-                if (accum.getDate("lastTime") == null) {
-                    accum.put("lastTime", doc.getDate("time"));
-                    accum.put("lastValue", doc.getInteger("value"));
-                    return;
-                }
+        try (MongoCursor<Document> cursor = coll.find(Filters.and(Filters.eq("point_id", counter), Filters.lte("time", endTime),
+                Filters.gte("time", startTime)), Document.class
+        ).sort(Sorts.ascending("time")).iterator()) {
+            while (cursor.hasNext()) {
+                Document doc = cursor.next();
+                    Object[] ar = new Object[3];
+                    ar[0] = doc.getDate("time");
+                    ar[1] = doc.getInteger("value");
+                    ar[2] = doc.toJson();
+                model.add(ar);
                 Date lastTime = accum.getDate("lastTime");
+                Date thisTime = doc.getDate("time");
+                boolean reachedEnd = (thisTime.getTime() > endTime.getTime());
                 Integer lastValue = accum.getInteger("lastValue");
                 if (doc.getInteger("value") == lastValue) return;
-                long elapsedMs = (doc.getDate("time").getTime() - lastTime.getTime());
+                long elapsedMs = (reachedEnd ? endTime.getTime() : thisTime.getTime()) - lastTime.getTime();
                 String field = String.format("ms_as_%d", lastValue);
                 accum.put(field, accum.getLong(field)+elapsedMs);
+                if (reachedEnd) break;
                 accum.put("lastValue", doc.getInteger("value")); 
                 accum.put("lastTime", doc.getDate("time"));
-                    Object[] ar = new Object[3];
-                    ar[0] = accum.getDate("lastTime");
-                    ar[1] = accum.getLong("ms_as_0");
-                    ar[2] = accum.getLong("ms_as_1");
-                
-                model.add(ar);
             }
-        });
-    }
-
-    private class MyListCollector<Document>
-        implements Collector<org.bson.Document, List<org.bson.Document>, List<Object[]>> {
-
-        Date lastTime;
-        Integer lastValue;
-        long ms_as_0, ms_as_1, ms_as_2, ms_as_3;
-        
-        @Override
-        public Supplier<List<org.bson.Document>> supplier() {
-            return ArrayList::new;
         }
-
-        @Override
-        public BiConsumer<List<org.bson.Document>, org.bson.Document> accumulator() {
-            return (List<org.bson.Document> accum, org.bson.Document doc) ->
-            {
-                if (lastTime == null) {
-                    lastTime = doc.getDate("time");
-                    lastValue = doc.getInteger("value");
-                    return;
-                }
-                if (doc.getInteger("value") == lastValue) return;
-                long elapsedMs = (doc.getDate("time").getTime() - lastTime.getTime());
-                switch (lastValue) {
-                    case 0:
-                        ms_as_0 += elapsedMs; break;
-                    case 1:
-                        ms_as_1 += elapsedMs; break;
-                    case 2:
-                        ms_as_2 += elapsedMs; break;
-                    case 3:
-                        ms_as_3 += elapsedMs; break;
-                }
-                lastValue = doc.getInteger("value"); 
-                lastTime = doc.getDate("time");
-                org.bson.Document d = new org.bson.Document("time", lastTime);
-                accum.add(d.append("ms_as_0", ms_as_0)
-                    .append("ms_as_1", ms_as_1)
-                    .append("ms_as_2", ms_as_2)
-                    .append("ms_as_3", ms_as_3)
-                );
-            };
-        }
-
-        @Override
-        public BinaryOperator<List<org.bson.Document>> combiner() {
-            return (left,right) -> {left.addAll(right); return left;};
-        }
-
-        @Override
-        public Function<List<org.bson.Document>, List<Object[]>> finisher() {
-            return accum -> {
-                List<Object[]> result = new ArrayList<>();
-                for (org.bson.Document d : accum) {
-                    Object[] ar = new Object[3];
-                    ar[0] = d.getDate("time");
-                    ar[1] = d.getLong("ms_as_0");
-                    ar[2] = d.getLong("ms_as_1");
-                    result.add(ar);
-                }
-                return result;
-            };
-        }
-
-        @Override
-        public Set<Characteristics> characteristics() {
-            return Collections.EMPTY_SET;
-        }
-        
+        FacesMessage msg = new FacesMessage();
+        Duration as_0 = Duration.ofMillis(accum.getLong("ms_as_0"));
+        Duration as_1 = Duration.ofMillis(accum.getLong("ms_as_1"));
+        msg.setDetail(String.format("Percent time as 1: %.2f %%", 
+                (as_1.toMillis()*100.0) / (as_1.toMillis() + as_0.toMillis()) ));
+        msg.setSummary(String.format("As 1: %s", as_1.toString()));
+        FacesContext.getCurrentInstance().addMessage(null, msg);
     }
 
 }
